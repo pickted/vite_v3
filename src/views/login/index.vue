@@ -20,7 +20,7 @@ const codeUrl = ref("")
 /** 登录表单数据 */
 const loginFormData: LoginRequestData = reactive({
   username: "admin",
-  password: "12345678",
+  password: "88888888",
   code: ""
 })
 /** 登录表单校验规则 */
@@ -37,6 +37,7 @@ const handleLogin = () => {
   loginFormRef.value?.validate((valid: boolean, fields) => {
     if (valid) {
       loading.value = true
+      //todo md5 password
       useUserStore()
         .login(loginFormData)
         .then(() => {
@@ -99,32 +100,32 @@ createCode()
               show-password
             />
           </el-form-item>
-          <el-form-item prop="code">
-            <el-input
-              v-model.trim="loginFormData.code"
-              placeholder="验证码"
-              type="text"
-              tabindex="3"
-              :prefix-icon="Key"
-              maxlength="7"
-              size="large"
-            >
-              <template #append>
-                <el-image :src="codeUrl" @click="createCode" draggable="false">
-                  <template #placeholder>
-                    <el-icon>
-                      <Picture />
-                    </el-icon>
-                  </template>
-                  <template #error>
-                    <el-icon>
-                      <Loading />
-                    </el-icon>
-                  </template>
-                </el-image>
-              </template>
-            </el-input>
-          </el-form-item>
+<!--          <el-form-item prop="code">-->
+<!--            <el-input-->
+<!--              v-model.trim="loginFormData.code"-->
+<!--              placeholder="验证码"-->
+<!--              type="text"-->
+<!--              tabindex="3"-->
+<!--              :prefix-icon="Key"-->
+<!--              maxlength="7"-->
+<!--              size="large"-->
+<!--            >-->
+<!--              <template #append>-->
+<!--                <el-image :src="codeUrl" @click="createCode" draggable="false">-->
+<!--                  <template #placeholder>-->
+<!--                    <el-icon>-->
+<!--                      <Picture />-->
+<!--                    </el-icon>-->
+<!--                  </template>-->
+<!--                  <template #error>-->
+<!--                    <el-icon>-->
+<!--                      <Loading />-->
+<!--                    </el-icon>-->
+<!--                  </template>-->
+<!--                </el-image>-->
+<!--              </template>-->
+<!--            </el-input>-->
+<!--          </el-form-item>-->
           <el-button :loading="loading" type="primary" size="large" @click.prevent="handleLogin">登 录</el-button>
         </el-form>
       </div>
