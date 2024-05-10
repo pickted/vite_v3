@@ -86,9 +86,9 @@ const getTableData = () => {
     username: searchData.username || undefined,
     phone: searchData.phone || undefined
   })
-    .then(({ data }) => {
-      paginationData.total = data.total
-      tableData.value = data.list
+    .then(({ result }) => {
+      paginationData.total = result.total
+      tableData.value = result.list
     })
     .catch(() => {
       tableData.value = []

@@ -6,3 +6,6 @@ dist
 dist-ssr
 *.local
 .npmrc
+build/*.js
+src/assets
+public

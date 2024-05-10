@@ -129,6 +129,15 @@ export const constantRoutes: RouteRecordRaw[] = [
           title: "Vxe Table",
           keepAlive: true
         }
+      },
+      {
+        path: "product",
+        component: () => import("@/views/product/product.vue"),
+        name: "Product",
+        meta: {
+          title: "Product",
+          keepAlive: true
+        }
       }
     ]
   },
