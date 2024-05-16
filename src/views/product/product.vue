@@ -1,17 +1,19 @@
 <script setup lang="ts">
 
-import {reactive, ref, watch} from "vue";
-import {getTableDataApi} from "@/api/product";
+import {reactive, ref, watch, toRefs, onMounted} from "vue";
+import {getTableDataApi, productInfo, productSave, productUpdate} from "@/api/product";
 import {usePagination} from "@/hooks/usePagination";
 import {CirclePlus, Delete, Download, Refresh, RefreshRight, Search} from "@element-plus/icons-vue";
-import {ElMessage, FormInstance, ListItem, UploadProps} from "element-plus";
+import {ElMessage, FormInstance, UploadProps} from "element-plus";
 import {fileUpload} from "@/api/upload";
 import {categoryList} from "@/api/category";
+import type {CreateOrUpdateTableRequestData} from "@/api/table/types/table";
 
 const {paginationData, handleSizeChange, handleCurrentChange} = usePagination();
 defineOptions({
   name: "Product"
 })
+
 
 const dialogVisible = ref(false)
 const loading = ref<boolean>(false)
@@ -25,7 +27,7 @@ const searchData = reactive({
   categoryName: ""
 })
 
-const form = reactive({
+let form = reactive({
   productId: '',
   productName: '',
   productImage: '',
@@ -33,6 +35,11 @@ const form = reactive({
   accountType: '',
   introduction: '',
 })
+
+interface ListItem {
+  categoryId: string,
+  categoryName: string
+}
 
 const categoryInfos = ref<ListItem[]>([])
 
@@ -56,16 +63,38 @@ const getTableData = () => {
   })
 }
 
-const onSubmit = () => {
-  console.log('submit!')
+const saveOrUpdate = () => {
+  if (form.productId === '') {
+    productSave(form).then(()=> {
+      ElMessage.success("操作成功")
+      dialogVisible.value = false
+      getTableData()
+    })
+  } else {
+    productUpdate(form).then(()=> {
+      ElMessage.success("操作成功")
+      dialogVisible.value = false
+      getTableData()
+    })
+  }
+
 }
 
 const handleUpdate = (row: any) => {
 
+  getCategoryList()
+  productInfo(row.productId)
+    .then((response) => {
+      form = JSON.parse(JSON.stringify(response.result))
+      // Object.assign(form, response.result)
+      imageUrl.value = form.productImage
+      dialogVisible.value = true
+      console.log(form)
+    })
 }
 
 const handleDelete = (row: any) => {
-
+  alert("确认删除?")
 }
 
 const handleSearch = () => {
@@ -97,9 +126,16 @@ const fileUploadImg = (file: any) => {
   console.log("file:", file)
   formData.append("file", file.file)
   fileUpload(formData).then((response) => {
-    imageUrl.value = response.result.key;
-    imageUrl.value = form.productImage
+    imageUrl.value = response.result.key
+    form.productImage = response.result.key
   })
+  console.log(imageUrl.value)
+}
+
+const resetForm = () => {
+  console.log("dialog回调事件")
+  form = JSON.parse(JSON.stringify(form))
+  imageUrl.value = ''
 }
 
 watch([() => paginationData.currentPage, () => paginationData.pageSize], getTableData, {immediate: true})
@@ -181,8 +217,12 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getTabl
     </el-card>
 
     <!--    新增/修改-->
-    <el-dialog v-model="dialogVisible" title="添加品牌" width="500" draggable>
-      <el-form :model="form" label-width="auto" style="max-width: 600px">
+    <el-dialog v-model="dialogVisible"
+               :title="form.productId === '' ? '添加品牌': '编辑品牌'"
+               width="500"
+               @closed="resetForm"
+               draggable>
+      <el-form :model="form" label-width="auto" style="max-width: 800px">
         <el-form-item label="品牌名称:">
           <el-input v-model="form.productName"/>
         </el-form-item>
@@ -201,8 +241,10 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getTabl
           </el-upload>
         </el-form-item>
         <el-form-item label="品牌类目:">
-          <el-select v-model="form.categoryId" @click="categoryList" placeholder="请选择类目">
-            <el-option v-for="item in categoryInfos" :key="item.valueOf()" :label="item.valueOf()" :value="item.valueOf()"/>
+          <el-select v-model="form.categoryId" filterable @click="getCategoryList"
+                     placeholder="请选择类目">
+            <el-option v-for="item in categoryInfos" :key="item.categoryId" :label="item.categoryName"
+                       :value="item.categoryId"/>
           </el-select>
         </el-form-item>
         <el-form-item label="账号类型:">
@@ -226,7 +268,7 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getTabl
       <template #footer>
         <div class="dialog-footer">
           <el-button @click="dialogVisible = false">取消</el-button>
-          <el-button type="primary" @click="dialogVisible = false">
+          <el-button type="primary" @click="saveOrUpdate">
             保存
           </el-button>
         </div>
@@ -235,7 +277,7 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getTabl
   </div>
 </template>
 
-<style scoped lang="scss">
+<style>
 
 .search-wrapper {
   margin-bottom: 20px;
@@ -265,9 +307,11 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getTabl
   height: 178px;
   display: block;
 }
-</style>
 
-<style>
+.select-downward .el-select-dropdown {
+  margin-top: -100%; /* 或者你可以使用具体的值来调整下拉菜单与触发元素的距离 */
+}
+
 .avatar-uploader .el-upload {
   border: 1px dashed var(--el-border-color);
   border-radius: 6px;
@@ -288,4 +332,5 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getTabl
   height: 178px;
   text-align: center;
 }
+
 </style>
