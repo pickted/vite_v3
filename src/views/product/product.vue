@@ -4,7 +4,9 @@ import {reactive, ref, watch} from "vue";
 import {getTableDataApi} from "@/api/product";
 import {usePagination} from "@/hooks/usePagination";
 import {CirclePlus, Delete, Download, Refresh, RefreshRight, Search} from "@element-plus/icons-vue";
-import type {FormInstance} from "element-plus";
+import {ElMessage, FormInstance, ListItem, UploadProps} from "element-plus";
+import {fileUpload} from "@/api/upload";
+import {categoryList} from "@/api/category";
 
 const {paginationData, handleSizeChange, handleCurrentChange} = usePagination();
 defineOptions({
@@ -22,6 +24,19 @@ const searchData = reactive({
   productId: "",
   categoryName: ""
 })
+
+const form = reactive({
+  productId: '',
+  productName: '',
+  productImage: '',
+  categoryId: '',
+  accountType: '',
+  introduction: '',
+})
+
+const categoryInfos = ref<ListItem[]>([])
+
+const imageUrl = ref<string>()
 
 const getTableData = () => {
   getTableDataApi({
@@ -41,6 +56,10 @@ const getTableData = () => {
   })
 }
 
+const onSubmit = () => {
+  console.log('submit!')
+}
+
 const handleUpdate = (row: any) => {
 
 }
@@ -56,6 +75,31 @@ const handleSearch = () => {
 const resetSearch = () => {
   console.log("111", searchFormRef.value?.resetFields())
   handleSearch()
+}
+
+const getCategoryList = () => {
+  categoryList().then((response) => {
+    categoryInfos.value = response.result
+  })
+}
+
+const beforeAvatarUpload: UploadProps['beforeUpload'] = (rawFile) => {
+  console.log('beforeAvatarUpload')
+  if (rawFile.size / 1024 / 1024 > 2) {
+    ElMessage.error('上传图片大小不能超过2MB!')
+    return false
+  }
+  return true
+}
+
+const fileUploadImg = (file: any) => {
+  const formData = new FormData();
+  console.log("file:", file)
+  formData.append("file", file.file)
+  fileUpload(formData).then((response) => {
+    imageUrl.value = response.result.key;
+    imageUrl.value = form.productImage
+  })
 }
 
 watch([() => paginationData.currentPage, () => paginationData.pageSize], getTableData, {immediate: true})
@@ -84,16 +128,16 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getTabl
       <div class="toolbar-wrapper">
         <div>
           <el-button type="primary" :icon="CirclePlus" @click="dialogVisible = true">添加品牌</el-button>
-<!--          <el-button type="danger" :icon="Delete">批量删除</el-button>-->
+          <!--          <el-button type="danger" :icon="Delete">批量删除</el-button>-->
         </div>
-<!--        <div>-->
-<!--          <el-tooltip content="下载">-->
-<!--            <el-button type="primary" :icon="Download" circle />-->
-<!--          </el-tooltip>-->
-<!--          <el-tooltip content="刷新当前页">-->
-<!--            <el-button type="primary" :icon="RefreshRight" circle @click="getTableData" />-->
-<!--          </el-tooltip>-->
-<!--        </div>-->
+        <!--        <div>-->
+        <!--          <el-tooltip content="下载">-->
+        <!--            <el-button type="primary" :icon="Download" circle />-->
+        <!--          </el-tooltip>-->
+        <!--          <el-tooltip content="刷新当前页">-->
+        <!--            <el-button type="primary" :icon="RefreshRight" circle @click="getTableData" />-->
+        <!--          </el-tooltip>-->
+        <!--        </div>-->
       </div>
       <div class="table-wrapper">
         <el-table :data="tableData">
@@ -135,6 +179,59 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getTabl
         />
       </div>
     </el-card>
+
+    <!--    新增/修改-->
+    <el-dialog v-model="dialogVisible" title="添加品牌" width="500" draggable>
+      <el-form :model="form" label-width="auto" style="max-width: 600px">
+        <el-form-item label="品牌名称:">
+          <el-input v-model="form.productName"/>
+        </el-form-item>
+        <el-form-item label="品牌图片:">
+          <el-upload
+            class="avatar-uploader"
+            action="#"
+            :show-file-list="false"
+            :before-upload="beforeAvatarUpload"
+            :http-request="fileUploadImg"
+          >
+            <img v-if="imageUrl" :src="'https://equitymall.yuanjiazheng.com/file' + imageUrl" class="avatar"/>
+            <el-icon v-else class="avatar-uploader-icon">
+              <Plus/>
+            </el-icon>
+          </el-upload>
+        </el-form-item>
+        <el-form-item label="品牌类目:">
+          <el-select v-model="form.categoryId" @click="categoryList" placeholder="请选择类目">
+            <el-option v-for="item in categoryInfos" :key="item.valueOf()" :label="item.valueOf()" :value="item.valueOf()"/>
+          </el-select>
+        </el-form-item>
+        <el-form-item label="账号类型:">
+          <el-select v-model="form.accountType" placeholder="请选择账号类型">
+            <el-option label="QQ" value="1"/>
+            <el-option label="手机" value="2"/>
+            <el-option label="邮箱" value="3"/>
+            <el-option label="其他" value="4"/>
+          </el-select>
+        </el-form-item>
+
+        <el-form-item label="使用说明">
+          <el-input v-model="form.introduction" type="textarea"/>
+        </el-form-item>
+        <!--          <el-form-item>-->
+        <!--            <el-button type="primary" @click="onSubmit">创建</el-button>-->
+        <!--            <el-button>取消</el-button>-->
+        <!--          </el-form-item>-->
+      </el-form>
+
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button @click="dialogVisible = false">取消</el-button>
+          <el-button type="primary" @click="dialogVisible = false">
+            保存
+          </el-button>
+        </div>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -161,5 +258,34 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getTabl
 .pager-wrapper {
   display: flex;
   justify-content: flex-end;
+}
+
+.avatar-uploader .avatar {
+  width: 178px;
+  height: 178px;
+  display: block;
+}
+</style>
+
+<style>
+.avatar-uploader .el-upload {
+  border: 1px dashed var(--el-border-color);
+  border-radius: 6px;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  transition: var(--el-transition-duration-fast);
+}
+
+.avatar-uploader .el-upload:hover {
+  border-color: var(--el-color-primary);
+}
+
+.el-icon.avatar-uploader-icon {
+  font-size: 28px;
+  color: #8c939d;
+  width: 178px;
+  height: 178px;
+  text-align: center;
 }
 </style>
