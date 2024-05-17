@@ -1,10 +1,10 @@
 <script setup lang="ts">
 
 import {reactive, ref, watch, toRefs, onMounted} from "vue";
-import {getTableDataApi, productInfo, productSave, productUpdate} from "@/api/product";
+import {getTableDataApi, productDelete, productInfo, productSave, productUpdate} from "@/api/product";
 import {usePagination} from "@/hooks/usePagination";
 import {CirclePlus, Delete, Download, Refresh, RefreshRight, Search} from "@element-plus/icons-vue";
-import {ElMessage, FormInstance, UploadProps} from "element-plus";
+import {ElMessage, ElMessageBox, FormInstance, UploadProps} from "element-plus";
 import {fileUpload} from "@/api/upload";
 import {categoryList} from "@/api/category";
 import type {CreateOrUpdateTableRequestData} from "@/api/table/types/table";
@@ -27,7 +27,7 @@ const searchData = reactive({
   categoryName: ""
 })
 
-let form = reactive({
+const form = ref({
   productId: '',
   productName: '',
   productImage: '',
@@ -64,14 +64,14 @@ const getTableData = () => {
 }
 
 const saveOrUpdate = () => {
-  if (form.productId === '') {
-    productSave(form).then(()=> {
+  if (form.value.productId === '') {
+    productSave(form.value).then(() => {
       ElMessage.success("操作成功")
       dialogVisible.value = false
       getTableData()
     })
   } else {
-    productUpdate(form).then(()=> {
+    productUpdate(form.value).then(() => {
       ElMessage.success("操作成功")
       dialogVisible.value = false
       getTableData()
@@ -81,20 +81,38 @@ const saveOrUpdate = () => {
 }
 
 const handleUpdate = (row: any) => {
-
   getCategoryList()
   productInfo(row.productId)
     .then((response) => {
-      form = JSON.parse(JSON.stringify(response.result))
+      form.value = JSON.parse(JSON.stringify(response.result))
       // Object.assign(form, response.result)
-      imageUrl.value = form.productImage
+      imageUrl.value = form.value.productImage
       dialogVisible.value = true
       console.log(form)
     })
 }
 
 const handleDelete = (row: any) => {
-  alert("确认删除?")
+  ElMessageBox.confirm(
+    '确认删除?',
+    '品牌删除',
+    {
+      confirmButtonText: '确认',
+      cancelButtonText: '取消',
+      type: 'warning',
+    }
+  )
+    .then(() => {
+      productDelete(row.productId)
+        .then(() => {
+          getTableData()
+        }).finally(() => {
+        ElMessage({
+          type: 'success',
+          message: '删除成功',
+        })
+      })
+    })
 }
 
 const handleSearch = () => {
@@ -127,14 +145,14 @@ const fileUploadImg = (file: any) => {
   formData.append("file", file.file)
   fileUpload(formData).then((response) => {
     imageUrl.value = response.result.key
-    form.productImage = response.result.key
+    form.value.productImage = response.result.key
   })
   console.log(imageUrl.value)
 }
 
 const resetForm = () => {
   console.log("dialog回调事件")
-  form = JSON.parse(JSON.stringify(form))
+  form.value = JSON.parse(JSON.stringify(form))
   imageUrl.value = ''
 }
 
@@ -266,12 +284,10 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getTabl
       </el-form>
 
       <template #footer>
-        <div class="dialog-footer">
-          <el-button @click="dialogVisible = false">取消</el-button>
-          <el-button type="primary" @click="saveOrUpdate">
-            保存
-          </el-button>
-        </div>
+        <el-button @click="dialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="saveOrUpdate">
+          保存
+        </el-button>
       </template>
     </el-dialog>
   </div>

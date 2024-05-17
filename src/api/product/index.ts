@@ -49,3 +49,10 @@ export function productUpdate(data: any) {
     data: data
   })
 }
+
+export function productDelete(productId: string) {
+  return request<any>({
+    url:"/product/delete/"+ productId,
+    method: "get"
+  })
+}
