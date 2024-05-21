@@ -8,6 +8,7 @@ import {ElMessage, ElMessageBox, FormInstance, UploadProps} from "element-plus";
 import {fileUpload} from "@/api/upload";
 import {categoryList} from "@/api/category";
 import type {CreateOrUpdateTableRequestData} from "@/api/table/types/table";
+import {type MyFormData} from "@/utils/fromdata";
 
 const {paginationData, handleSizeChange, handleCurrentChange} = usePagination();
 defineOptions({
@@ -140,9 +141,10 @@ const beforeAvatarUpload: UploadProps['beforeUpload'] = (rawFile) => {
 }
 
 const fileUploadImg = (file: any) => {
-  const formData = new FormData();
+  const formData: MyFormData = new FormData();
   console.log("file:", file)
   formData.append("file", file.file)
+  // formData.append("1", ["1","2","3"])
   fileUpload(formData).then((response) => {
     imageUrl.value = response.result.key
     form.value.productImage = response.result.key
