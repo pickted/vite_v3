@@ -3,7 +3,7 @@
 import {reactive, ref, watch, toRefs, onMounted} from "vue";
 import {getTableDataApi, productDelete, productInfo, productSave, productUpdate} from "@/api/product";
 import {usePagination} from "@/hooks/usePagination";
-import {CirclePlus, Delete, Download, Refresh, RefreshRight, Search} from "@element-plus/icons-vue";
+import {CirclePlus, Delete, Download, Plus, Refresh, RefreshRight, Search} from "@element-plus/icons-vue";
 import {ElMessage, ElMessageBox, FormInstance, UploadProps} from "element-plus";
 import {fileUpload} from "@/api/upload";
 import {categoryList} from "@/api/category";
@@ -15,8 +15,9 @@ defineOptions({
   name: "Product"
 })
 
-
-const dialogVisible = ref(false)
+const hideUpload = ref<boolean>(false)
+const dialogVisible = ref<boolean>(false)
+const dialogImgVisible = ref<boolean>(false)
 const loading = ref<boolean>(false)
 
 const tableData = ref<[]>([])
@@ -149,7 +150,21 @@ const fileUploadImg = (file: any) => {
     imageUrl.value = response.result.key
     form.value.productImage = response.result.key
   })
-  console.log(imageUrl.value)
+  hideUpload.value = true
+  console.log("imageUrl", imageUrl.value)
+}
+
+const handleRemoveFile = (file: any) => {
+  console.log("移除文件触发")
+  imageUrl.value = ""
+  hideUpload.value = false
+  file = undefined
+}
+
+const handleImgPreview = (file: any) => {
+  dialogImgVisible.value = true
+  console.log("点击已上传文件触发的钩子")
+  console.log(file)
 }
 
 const resetForm = () => {
@@ -247,18 +262,28 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getTabl
           <el-input v-model="form.productName"/>
         </el-form-item>
         <el-form-item label="品牌图片:">
-          <el-upload
-            class="avatar-uploader"
-            action="#"
-            :show-file-list="false"
-            :before-upload="beforeAvatarUpload"
-            :http-request="fileUploadImg"
-          >
-            <img v-if="imageUrl" :src="'https://equitymall.yuanjiazheng.com/file' + imageUrl" class="avatar"/>
-            <el-icon v-else class="avatar-uploader-icon">
+          <!--          <el-upload-->
+          <!--            class="avatar-uploader"-->
+          <!--            action="#"-->
+          <!--            :show-file-list="false"-->
+          <!--            :before-upload="beforeAvatarUpload"-->
+          <!--            :http-request="fileUploadImg"-->
+          <!--          >-->
+          <!--            <img v-if="imageUrl" :src="'https://equitymall.yuanjiazheng.com/file' + imageUrl" class="avatar" alt=""/>-->
+          <!--            <el-icon v-else class="avatar-uploader-icon">-->
+          <!--              <Plus/>-->
+          <!--            </el-icon>-->
+          <!--          </el-upload>-->
+          <el-upload :class="{hide: hideUpload}" action="" list-type="picture-card" :auto-upload="true"
+                     :before-remove="handleRemoveFile" :on-preview="handleImgPreview" :limit="1"
+                     :http-request="fileUploadImg">
+            <el-icon>
               <Plus/>
             </el-icon>
           </el-upload>
+          <el-dialog v-model="dialogImgVisible">
+            <el-image :src="'https://equitymall.yuanjiazheng.com/file' + imageUrl" fit="fill" style="width: 100%"></el-image>
+          </el-dialog>
         </el-form-item>
         <el-form-item label="品牌类目:">
           <el-select v-model="form.categoryId" filterable @click="getCategoryList"
@@ -296,6 +321,9 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getTabl
 </template>
 
 <style>
+.hide .el-upload--picture-card {
+  display: none;
+}
 
 .search-wrapper {
   margin-bottom: 20px;
