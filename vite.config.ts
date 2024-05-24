@@ -35,7 +35,8 @@ export default (configEnv: ConfigEnv): UserConfigExport => {
       /** 接口代理 */
       proxy: {
         "/server": {
-          target: "http://192.168.2.244:10001",
+          // target: "http://192.168.2.244:10001",
+          target: "http://emall.owlive.cn/api",
           ws: true,
           /** 是否允许跨域 */
           changeOrigin: true,

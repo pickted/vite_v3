@@ -156,6 +156,22 @@ const resetForm = () => {
   imageUrl.value = ''
 }
 
+/**
+ * 判断传入的字符串是否是一个小数
+ */
+const judgeDecimal = (str: string) => {
+  if(!str.includes(".")) {
+    return false
+  }
+  const arr:string[] = str.split(".")
+  if (arr.length > 2) {
+    return false
+  }
+  const number1 = parseInt(arr[0]);
+  const number2 = parseInt(arr[1]);
+  return !(isNaN(number1) && isNaN(number2));
+}
+
 watch([() => paginationData.currentPage, () => paginationData.pageSize], getTableData, {immediate: true})
 </script>
 
