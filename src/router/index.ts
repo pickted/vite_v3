@@ -135,7 +135,7 @@ export const constantRoutes: RouteRecordRaw[] = [
         component: () => import("@/views/product/product.vue"),
         name: "Product",
         meta: {
-          title: "Product",
+          title: "品牌管理",
           keepAlive: true
         }
       }
