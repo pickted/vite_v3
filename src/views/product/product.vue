@@ -9,6 +9,7 @@ import {fileUpload} from "@/api/upload";
 import {categoryList} from "@/api/category";
 import type {CreateOrUpdateTableRequestData} from "@/api/table/types/table";
 import {type MyFormData} from "@/utils/fromdata";
+import Template from "@/views/template/template.vue";
 
 const {paginationData, handleSizeChange, handleCurrentChange} = usePagination();
 defineOptions({
@@ -229,7 +230,12 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getTabl
       <div class="table-wrapper">
         <el-table :data="tableData">
           <!--      <el-table-column type="selection" width="50" align="center"/>-->
-          <el-table-column prop="productName" label="品牌名称" align="center"/>
+          <el-table-column prop="productName" label="品牌名称" align="center">
+            <template #default="scope">
+<!--              插槽使用-->
+            <slot>{{scope.row.productName}}</slot>
+            </template>
+          </el-table-column>>
           <!--      <el-table-column prop="roles" label="角色" align="center">-->
           <!--        <template #default="scope">-->
           <!--          <el-tag v-if="scope.row.roles === 'admin'" effect="plain">admin</el-tag>-->
